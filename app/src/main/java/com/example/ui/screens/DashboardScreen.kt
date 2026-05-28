@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -115,6 +119,97 @@ fun DashboardScreen(viewModel: MainViewModel, navController: NavController) {
                     progress = if (currentMonth.skuActual > 0) (currentMonth.skuActual / 4.7f * 100).toFloat() else 0f,
                     isCurrency = false
                 )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "BIỂU ĐỒ DOANH SỐ",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Black,
+                )
+                
+                var chartFilter by remember { mutableStateOf(0) }
+                val filters = listOf("Năm", "Q1", "Q2", "Q3", "Q4", "6T Đầu", "6T Cuối")
+                
+                ScrollableTabRow(
+                    selectedTabIndex = chartFilter,
+                    edgePadding = 0.dp,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    filters.forEachIndexed { index, title ->
+                        Tab(
+                            selected = chartFilter == index,
+                            onClick = { chartFilter = index },
+                            text = { Text(title) }
+                        )
+                    }
+                }
+                
+                val displayMonths = when (chartFilter) {
+                    1 -> months.filter { it.monthIndex in 0..2 }
+                    2 -> months.filter { it.monthIndex in 3..5 }
+                    3 -> months.filter { it.monthIndex in 6..8 }
+                    4 -> months.filter { it.monthIndex in 9..11 }
+                    5 -> months.filter { it.monthIndex in 0..5 }
+                    6 -> months.filter { it.monthIndex in 6..11 }
+                    else -> months
+                }
+                
+                val maxSales = (displayMonths.maxOfOrNull { it.salesActual.coerceAtLeast(it.salesTarget) } ?: 100.0).coerceAtLeast(100.0).toFloat()
+                
+                val primaryColor = MaterialTheme.colorScheme.primary
+                val targetColor = MaterialTheme.colorScheme.tertiary
+                
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(200.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+                        Canvas(modifier = Modifier.fillMaxSize()) {
+                            val barWidth = size.width / (displayMonths.size * 2.5f)
+                            val spacing = (size.width - (barWidth * 2 * displayMonths.size)) / Math.max(1, displayMonths.size)
+                            
+                            displayMonths.forEachIndexed { index, month ->
+                                val actualHeight = (month.salesActual.toFloat() / maxSales) * size.height
+                                val targetHeight = (month.salesTarget.toFloat() / maxSales) * size.height
+                                
+                                val startX = (index * (barWidth * 2 + spacing)) + spacing / 2 - 10f
+                                
+                                // Target Bar
+                                drawRoundRect(
+                                    color = targetColor.copy(alpha = 0.5f),
+                                    topLeft = Offset(startX, size.height - targetHeight),
+                                    size = Size(barWidth, targetHeight),
+                                    cornerRadius = CornerRadius(4.dp.toPx())
+                                )
+                                // Actual Bar
+                                drawRoundRect(
+                                    color = primaryColor,
+                                    topLeft = Offset(startX + barWidth, size.height - actualHeight),
+                                    size = Size(barWidth, actualHeight),
+                                    cornerRadius = CornerRadius(4.dp.toPx())
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.Center) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(12.dp).background(primaryColor, CircleShape))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Thực đạt", style = MaterialTheme.typography.bodySmall)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(12.dp).background(targetColor.copy(alpha=0.5f), CircleShape))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Mục tiêu", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
 
             item {

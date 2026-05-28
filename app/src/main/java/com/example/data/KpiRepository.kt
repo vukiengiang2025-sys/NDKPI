@@ -9,6 +9,10 @@ class KpiRepository(private val dao: KpiDao) {
 
     fun getMonth(index: Int): Flow<MonthEntity?> = dao.getMonth(index)
 
+    suspend fun insertTask(task: TaskEntity) {
+        dao.insertTask(task)
+    }
+
     suspend fun initializeMonthsIfEmpty(existingMonths: List<MonthEntity>) {
         if (existingMonths.isEmpty()) {
             val defaultMonths = (0..11).map { index ->

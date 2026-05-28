@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.AppDatabase
 import com.example.data.KpiRepository
+import com.example.data.BackupData
 import com.example.data.MonthEntity
 import com.example.data.SettingsManager
 import com.example.network.Content
@@ -17,6 +18,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import java.util.Calendar
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -116,7 +119,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     contents = listOf(Content(parts = listOf(Part(text = prompt))))
                 )
 
-                val response = RetrofitClient.service.generateContent(apiKey, request)
+                val response = RetrofitClient.service.generateContent(settingsManager.selectedModel, apiKey, request)
                 val reply = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: "Không có phản hồi từ AI."
                 
                 _chatMessages.value = _chatMessages.value + Pair("AI", reply.trim())
@@ -125,6 +128,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             } finally {
                 _isAiThinking.value = false
             }
+        }
+    }
+
+    fun exportBackupData(): String {
+        val backup = BackupData(months = months.value, tasks = tasks.value)
+        return Json.encodeToString(backup)
+    }
+
+    fun importBackupData(jsonString: String): Boolean {
+        return try {
+            val backup = Json.decodeFromString<BackupData>(jsonString)
+            viewModelScope.launch {
+                backup.months.forEach { repository.updateMonth(it) }
+                backup.tasks.forEach { repository.insertTask(it) }
+            }
+            true
+        } catch (e: Exception) {
+            false
         }
     }
 }

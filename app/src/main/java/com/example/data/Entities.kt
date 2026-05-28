@@ -2,7 +2,9 @@ package com.example.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "months")
 data class MonthEntity(
     @PrimaryKey val monthIndex: Int,
@@ -16,6 +18,7 @@ data class MonthEntity(
     val n3Sales: Double = 0.0
 )
 
+@Serializable
 @Entity(tableName = "tasks")
 data class TaskEntity(
     @PrimaryKey val id: String,
@@ -26,4 +29,10 @@ data class TaskEntity(
     val priority: String = "medium", // high, medium, low
     val type: String = "other", // coverage, sales, sku, other
     val createdAt: Long = System.currentTimeMillis()
+)
+
+@Serializable
+data class BackupData(
+    val months: List<MonthEntity>,
+    val tasks: List<TaskEntity>
 )

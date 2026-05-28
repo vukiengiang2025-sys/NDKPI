@@ -17,4 +17,7 @@ class SettingsManager(context: Context) {
     var isReminderEnabled: Boolean
         get() = prefs.getBoolean("daily_reminder", false)
         set(value) = prefs.edit().putBoolean("daily_reminder", value).apply()
+    var selectedModel: String
+        get() = prefs.getString("selected_model", "gemini-3.1-pro-preview") ?: "gemini-3.1-pro-preview"
+        set(value) = prefs.edit().putString("selected_model", value).apply()
 }
