@@ -32,7 +32,7 @@ fun IncomeScreen(viewModel: MainViewModel, navController: NavController) {
     val kpiPoints = KpiCalculator.calcTotalKPI(month.salesActual, month.salesTarget, month.coverageActual, month.coverageTarget, month.skuActual)
     val totalIncome = KpiCalculator.calculateBonus(month.n1Sales, month.n2Sales, month.n3Sales, kpiPoints)
 
-    val formatter = NumberFormat.getNumberInstance(Locale.Builder().setLanguage("vi").setRegion("VN").build())
+    val formatter = NumberFormat.getNumberInstance(Locale.forLanguageTag("vi-VN"))
 
     Scaffold(
         topBar = {
